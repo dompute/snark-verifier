@@ -4,9 +4,10 @@
 use crate::loader::evm::{Address, H256, U256};
 use bytes::Bytes;
 use revm::{
-    evm_inner, opcode, spec_opcode_gas, Account, BlockEnv, CallInputs, CallScheme, CreateInputs,
-    CreateScheme, Database, DatabaseCommit, EVMData, Env, ExecutionResult, Gas, GasInspector,
-    InMemoryDB, Inspector, Interpreter, Memory, OpCode, Return, TransactOut, TransactTo, TxEnv,
+    evm_inner, opcode, spec_opcode_gas, Account, BlockEnv, CallInputs, CallScheme, CfgEnv,
+    CreateInputs, CreateScheme, Database, DatabaseCommit, EVMData, Env, ExecutionResult, Gas,
+    GasInspector, InMemoryDB, Inspector, Interpreter, Memory, OpCode, Return, SpecId::FRONTIER,
+    TransactOut, TransactTo, TxEnv,
 };
 use sha3::{Digest, Keccak256};
 use std::{cell::RefCell, collections::HashMap, fmt::Display, rc::Rc};
@@ -809,6 +810,8 @@ impl Executor {
             ..
         } = exec_result;
 
+        println!("Call Result: {:?}", exit_reason);
+
         let result = match out {
             TransactOut::Call(ref data) => data.to_owned(),
             _ => Bytes::default(),
@@ -869,7 +872,10 @@ impl Executor {
                 gas_limit: self.gas_limit.as_u64(),
                 ..TxEnv::default()
             },
-            ..Env::default()
+            cfg: CfgEnv {
+                limit_contract_code_size: Some(usize::MAX),
+                ..CfgEnv::default()
+            },
         }
     }
 }
